@@ -1,18 +1,6 @@
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const summaryBox = document.createElement('div');
-
-summaryBox.style.position = 'absolute';
-summaryBox.style.padding = '10px';
-summaryBox.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-summaryBox.style.color = 'white';
-summaryBox.style.borderRadius = '5px';
-summaryBox.style.fontSize = '14px';
-summaryBox.style.maxWidth = '250px';
-summaryBox.style.display = 'none';
-
-document.body.appendChild(summaryBox);
 
 async function setupCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
@@ -46,6 +34,7 @@ canvas.addEventListener('click', async event => {
     for (const prediction of currentPredictions) {
         if (isPointInRect(x, y, prediction.bbox)) {
             const summary = await fetchWikipediaSummary(prediction.class);
+            const summaryBox = prediction.summaryBox;
             summaryBox.style.display = 'block';
             summaryBox.style.left = `${prediction.bbox[0] + prediction.bbox[2]}px`;
             summaryBox.style.top = `${prediction.bbox[1]}px`;
@@ -53,8 +42,6 @@ canvas.addEventListener('click', async event => {
             return;
         }
     }
-
-    summaryBox.style.display = 'none';
 });
 
 async function detectObjects() {
@@ -62,15 +49,28 @@ async function detectObjects() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    // Initialize currentPredictions as an empty array
     currentPredictions = [];
-    
+
     while (true) {
         const predictions = await model.detect(video);
         currentPredictions = predictions;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
         predictions.forEach(prediction => {
+            if (!prediction.summaryBox) {
+                const summaryBox = document.createElement('div');
+                summaryBox.style.position = 'absolute';
+                summaryBox.style.padding = '10px';
+                summaryBox.style.backgroundColor = `rgba(0, 0, 0, ${prediction.score * 0.7})`;
+                summaryBox.style.color = 'white';
+                summaryBox.style.borderRadius = '5px';
+                summaryBox.style.fontSize = '14px';
+                summaryBox.style.maxWidth = '250px';
+                summaryBox.style.display = 'none';
+                document.body.appendChild(summaryBox);
+                prediction.summaryBox = summaryBox;
+            }
+
             ctx.strokeStyle = 'green';
             ctx.lineWidth = 4;
             ctx.strokeRect(...prediction.bbox);
