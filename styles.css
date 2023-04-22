@@ -9,8 +9,9 @@ body {
 }
 
 #video, #canvas {
-    position: absolute;
+    visibility: hidden;
 }
+
 
 #introVideo {
     position: absolute;
