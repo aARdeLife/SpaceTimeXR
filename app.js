@@ -1,13 +1,19 @@
 const introVideo = document.getElementById('introVideo');
-const playButton = document.getElementById('playButton');
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const summaryBox = document.createElement('div');
 
-playButton.addEventListener('click', async () => {
-    introVideo.play();
-    playButton.style.display = 'none';
-});
+summaryBox.style.position = 'absolute';
+summaryBox.style.padding = '10px';
+summaryBox.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+summaryBox.style.color = 'white';
+summaryBox.style.borderRadius = '5px';
+summaryBox.style.fontSize = '14px';
+summaryBox.style.maxWidth = '250px';
+summaryBox.style.display = 'none';
+
+document.body.appendChild(summaryBox);
 
 introVideo.addEventListener('ended', async () => {
     introVideo.style.display = 'none';
@@ -51,6 +57,8 @@ canvas.addEventListener('click', async event => {
     for (const prediction of currentPredictions) {
         if (isPointInRect(x, y, prediction.bbox)) {
             const summary = await fetchWikipediaSummary(prediction.class);
+            const opacity = Math.min(1, Math.max(0, prediction.score));
+            summaryBox.style.backgroundColor = `rgba(0, 0, 0, ${opacity})`;
             summaryBox.style.display = 'block';
             summaryBox.style.left = `${prediction.bbox[0] + prediction.bbox[2]}px`;
             summaryBox.style.top = `${prediction.bbox[1]}px`;
@@ -69,14 +77,14 @@ async function detectObjects() {
 
     // Initialize currentPredictions as an empty array
     currentPredictions = [];
-    
+
     while (true) {
         const predictions = await model.detect(video);
         currentPredictions = predictions;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
         predictions.forEach(prediction => {
-            ctx.strokeStyle = 'green';
+            ctx.strokeStyle = 'yellow';
             ctx.lineWidth = 4;
             ctx.strokeRect(...prediction.bbox);
         });
