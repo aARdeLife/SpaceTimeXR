@@ -17,14 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(summaryBox);
 
   introVideo.addEventListener('ended', async () => {
-      introVideo.style.display = 'none';
-      video.style.display = 'block';
-      canvas.style.display = 'block';
+    introVideo.style.display = 'none';
+    video.style.visibility = 'visible';
+    canvas.style.visibility = 'visible';
 
-      const videoElement = await setupCamera();
-      videoElement.play();
-      detectObjects();
-  });
+    const videoElement = await setupCamera();
+    videoElement.play();
+    detectObjects();
+});
+
 
   async function setupCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
