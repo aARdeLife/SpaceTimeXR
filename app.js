@@ -36,7 +36,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ... rest of the code ...
+  function isPointInRect(x, y, rect) {
+    return x >= rect[0] && x <= rect[0] + rect[2] && y >= rect[1] && y <= rect[1] + rect[3];
+  }
+
+  async function fetchWikipediaSummary(title) {
+    const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+    if (response.ok) {
+        const data = await response.json();
+        return data.extract;
+    } else {
+        return 'No summary available';
+    }
+  }
 
   canvas.addEventListener('click', async event => {
     const rect = canvas.getBoundingClientRect();
@@ -48,4 +60,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const summary = await fetchWikipediaSummary(prediction.class);
             const opacity = Math.min(1, Math.max(0, prediction.score));
             summaryBox.style.backgroundColor = `rgba(0, 0, 0, ${opacity})`;
-            summaryBox.style.display =
+            summaryBox.style.display = 'block';
+            summaryBox.style.left = `${prediction.bbox[0] + prediction.bbox[2]}px`;
+            summaryBox.style.top = `${prediction.bbox[1]}px`;
+            summaryBox.textContent = summary;
+            return;
+        }
+    }
+
+    summaryBox.style.display = 'none';
+  });
+
+  async function detectObjects() {
+    const model = await cocoSsd.load();
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Initialize currentPredictions as an empty array
+    currentPredictions = [];
+
+    while (true) {
+      const predictions = await model.detect(video);
+      currentPredictions = predictions;
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+      predictions.forEach(prediction => {
+        const distance = prediction.bbox[3];
+        let color;
+
+        if (distance < 50) {
+          color = 'red';
+        } else if (distance < 150) {
+          color = 'orange';
+        } else {
+          color = 'yellow';
+        }
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx
